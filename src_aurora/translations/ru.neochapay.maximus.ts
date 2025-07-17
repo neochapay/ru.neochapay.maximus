@@ -72,72 +72,72 @@
 <context>
     <name>ChatListPage</name>
     <message>
-        <location filename="../qml/pages/ChatListPage.qml" line="51"/>
+        <location filename="../qml/pages/ChatListPage.qml" line="52"/>
         <source>About</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/ChatListPage.qml" line="56"/>
+        <location filename="../qml/pages/ChatListPage.qml" line="57"/>
         <source>Logout</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/ChatListPage.qml" line="173"/>
+        <location filename="../qml/pages/ChatListPage.qml" line="174"/>
         <source>No messages</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/ChatListPage.qml" line="220"/>
+        <location filename="../qml/pages/ChatListPage.qml" line="223"/>
         <source>Can send messages</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/ChatListPage.qml" line="220"/>
+        <location filename="../qml/pages/ChatListPage.qml" line="223"/>
         <source>Can&apos;t send messages</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/ChatListPage.qml" line="275"/>
+        <location filename="../qml/pages/ChatListPage.qml" line="278"/>
         <source>yesterday</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/ChatListPage.qml" line="277"/>
+        <location filename="../qml/pages/ChatListPage.qml" line="280"/>
         <source>Sun</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/ChatListPage.qml" line="277"/>
+        <location filename="../qml/pages/ChatListPage.qml" line="280"/>
         <source>Mon</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/ChatListPage.qml" line="277"/>
+        <location filename="../qml/pages/ChatListPage.qml" line="280"/>
         <source>Tue</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/ChatListPage.qml" line="277"/>
+        <location filename="../qml/pages/ChatListPage.qml" line="280"/>
         <source>Wed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/ChatListPage.qml" line="278"/>
+        <location filename="../qml/pages/ChatListPage.qml" line="281"/>
         <source>Thu</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/ChatListPage.qml" line="278"/>
+        <location filename="../qml/pages/ChatListPage.qml" line="281"/>
         <source>Fri</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/ChatListPage.qml" line="278"/>
+        <location filename="../qml/pages/ChatListPage.qml" line="281"/>
         <source>Sat</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/ChatListPage.qml" line="46"/>
+        <location filename="../qml/pages/ChatListPage.qml" line="47"/>
         <source>Chats</source>
         <translation type="unfinished"></translation>
     </message>
@@ -145,7 +145,7 @@
 <context>
     <name>ChatPage</name>
     <message>
-        <location filename="../qml/pages/ChatPage.qml" line="35"/>
+        <location filename="../qml/pages/ChatPage.qml" line="38"/>
         <source>Chat</source>
         <translation type="unfinished"></translation>
     </message>

@@ -20,6 +20,7 @@
 import QtQuick 2.0
 import Sailfish.Silica 1.0
 import QtGraphicalEffects 1.0
+import "../jsFunctions/emoji.js" as EmojiFunc
 
 Page {
     id: chatListPage
@@ -170,11 +171,13 @@ Page {
                                - (unreadBadge.visible ? unreadBadge.width + Theme.paddingSmall : 0)
                                - (statusIcon.visible ? statusIcon.width + Theme.paddingSmall : 0)
 
-                        text: chatDescription || qsTr("No messages")
+                        text: EmojiFunc.convertToOriginalHtml(chatDescription) || qsTr("No messages")
                         color: unreadCount > 0 ? Theme.primaryColor : Theme.secondaryColor
                         font.pixelSize: Theme.fontSizeSmall
                         truncationMode: TruncationMode.Fade
                         maximumLineCount: 1
+                        textFormat: Text.RichText
+
                         // font.bold: unreadCount > 0
                     }
 

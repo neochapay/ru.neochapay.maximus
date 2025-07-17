@@ -27,6 +27,7 @@
 #include "api/chatmessage.h"
 #include "api/chatmessagereactions.h"
 #include "api/chat.h"
+#include "emojimodel.h"
 
 int main(int argc, char *argv[])
 {
@@ -41,6 +42,7 @@ int main(int argc, char *argv[])
     qmlRegisterType<ChatMessage>("ru.neochapay.maximus", 1, 0, "ChatMessage");
     qmlRegisterType<ChatMessageReactions>("ru.neochapay.maximus", 1, 0, "ChatMessageReactions");
     qmlRegisterType<Chat>("ru.neochapay.maximus", 1, 0, "Chat");
+    qmlRegisterType<EmojiModel>("EmojiModel", 1, 0, "EmojiModel");
 
     QScopedPointer<QQuickView> view(Aurora::Application::createView());
     view->rootContext()->setContextProperty("version", APP_VERSION);

@@ -22,6 +22,9 @@ import Sailfish.Silica 1.0
 import QtGraphicalEffects 1.0
 
 import ru.neochapay.maximus 1.0
+import EmojiModel 1.0
+import "../jsFunctions/emoji.js" as EmojiFunc
+
 
 Page {
     id: chatListPage
@@ -36,6 +39,47 @@ Page {
     }
 
     property var currentChat
+    property bool showPopup: false
+
+
+    // Background dimmer
+    Rectangle {
+        visible: showPopup
+        anchors.fill: parent
+        z: 10
+        color: "#80000000"
+
+        MouseArea {
+            anchors.fill: parent
+            onClicked:{
+                showPopup = false
+            }
+        }
+    }
+
+    Rectangle {
+        visible: showPopup
+        width: parent.width
+        height: parent.height / 3
+        z: 11
+        radius: chatMessageImage.width / 2
+        anchors{
+            bottom: sendMessageRow.top
+            left: parent.left
+            leftMargin: Theme.paddingSmall
+            rightMargin: Theme.paddingSmall
+        }
+
+        color: "white"
+        border.color: "gray"
+
+        EmojiPicker {
+            id: emojiPicker
+            model: emojiModel
+            editor: messageTextField
+            anchors.fill: parent
+        }
+    }
 
     BusyIndicator {
         id: spinner
@@ -53,6 +97,12 @@ Page {
         }
     }
 
+    EmojiModel {
+        id: emojiModel
+        iconsPath: '../emojiSvgs/'
+        iconsType: '.svg'
+    }
+
     SilicaListView {
         id: messagesListView
         width: parent.width
@@ -61,6 +111,11 @@ Page {
         model: chatMessagesModel
         clip: true
 
+        MouseArea {
+            anchors.fill: parent
+            z: -1  // Put behind delegates
+            onClicked: messagesListView.forceActiveFocus()
+        }
         property bool needToUpdate: true
 
         onCountChanged: {
@@ -68,6 +123,7 @@ Page {
         }
 
         delegate: Loader{
+            z: 1
             Component.onCompleted: {
                 if(messageType == ChatMessage.TextMessage || messageType == ChatMessage.PhotoMessage) {
                     source = "../components/TextMessageItem.qml";
@@ -83,21 +139,68 @@ Page {
     Item{
         id: sendMessageRow
         width: parent.width
-        height: visible ? Theme.iconSizeExtraLarge : 0
+        height: visible ? Theme.iconSizeLarge : 0
         anchors.bottom: chatListPage.bottom
         visible: currentChat.type !== Chat.CHANNEL;
 
-        TextField{
+        TextEdit{
             id: messageTextField
-            width: parent.width - sendButton.width - Theme.paddingSmall*2
+            clip: true
+            width: parent.width - sendButton.width - emojiButton.width - Theme.paddingSmall*4
             height: parent.height - Theme.paddingSmall*2
+            verticalAlignment:  TextEdit.AlignVCenter
+            wrapMode: TextEdit.NoWrap
+            textFormat: TextEdit.RichText
+            color: Theme.secondaryColor
+            anchors{
+                top: parent.top
+                topMargin: Theme.paddingSmall
+                left: emojiButton.right
+                leftMargin: Theme.paddingSmall
+            }
+
+            Keys.onReturnPressed: event.accepted = true
+            Keys.onEnterPressed: event.accepted = true
+
+            Rectangle {
+                anchors {
+                    left: parent.left
+                    right: parent.right
+                    bottom: parent.bottom
+                    bottomMargin: Theme.paddingSmall
+                }
+                height: 2  // Underline thickness
+                color: messageTextField.activeFocus ? Theme.highlightColor : Theme.primaryColor  // Blue when focused, gray otherwise
+
+                Behavior on color {
+                    ColorAnimation { duration: 200 }  // Smooth color transition
+                }
+            }
+        }
+
+
+        IconButton {
+            id: emojiButton
+            width: sendButton.width
+            height: sendButton.height
+            icon.fillMode: Image.PreserveAspectFit
+            icon.source: "../icons/emoji-smiley.svg?" + (pressed
+                                                         ? Theme.highlightColor
+                                                         : Theme.primaryColor)
+            icon.width: width * 0.4
+            icon.height: height * 0.4
             anchors{
                 top: parent.top
                 topMargin: Theme.paddingSmall
                 left: parent.left
                 leftMargin: Theme.paddingSmall
             }
+            onClicked: {
+                showPopup = true
+                //console.log("emoji!!")
+            }
         }
+
 
         IconButton {
             id: sendButton
@@ -113,7 +216,8 @@ Page {
                 leftMargin: Theme.paddingSmall
             }
             onClicked: {
-                serverConnection.sendMessage(currentChat, messageTextField.text)
+                //console.log("text a ", extractTextWithEmojis(messageTextField.text));
+                serverConnection.sendMessage(currentChat, EmojiFunc.extractTextWithEmojis(messageTextField.text))
                 messageTextField.text = ""
             }
         }

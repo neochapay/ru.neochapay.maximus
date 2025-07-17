@@ -24,6 +24,9 @@ import QtGraphicalEffects 1.0
 
 import ru.neochapay.maximus 1.0
 
+import "../jsFunctions/emoji.js" as EmojiFunc
+
+
 Item {
     id: listItem
     height: isMyMessage ? messageBackground.height + Theme.paddingLarge
@@ -119,7 +122,8 @@ Item {
 
         Label {
             id: chatMessageText
-            text: formatLinks(messageText)
+            z:20
+            text: EmojiFunc.convertToOriginalHtml(formatLinks(messageText))
             visible: text.length > 0
             width: listItem.width * 0.6
             font.pixelSize: Theme.fontSizeMedium
