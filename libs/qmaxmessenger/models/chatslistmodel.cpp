@@ -26,11 +26,12 @@ ChatsListModel::ChatsListModel(QObject *parent)
     , m_messQueue(MessagesQueue::instance())
 {
     connect(m_messQueue, &MessagesQueue::messageReceived, [=](RawApiMessage message) {
-        if(message.opcode() == 19) {
+        if(message.opcode() == RawApiMessage::OpCode::LOGIN) {
             loadChatsList(message.payload());
-        } else if(message.opcode() == 130) {
+        } else if(message.opcode() == RawApiMessage::OpCode::NOTIF_MARK) {
             handleNewMessageChanges(message.payload());
-        } else if(message.opcode() == 128 || message.opcode() == 64) {
+        } else if(message.opcode() == RawApiMessage::OpCode::NOTIF_MESSAGE
+                   || message.opcode() == RawApiMessage::OpCode::MSG_SEND) {
             addNewMessageToChat(message.payload());
             sortChats();
         }

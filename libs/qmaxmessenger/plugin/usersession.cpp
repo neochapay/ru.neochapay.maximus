@@ -32,15 +32,15 @@ UserSession::UserSession(QObject *parent)
 {
     connect(m_messQueue, &MessagesQueue::messageReceived, [=](RawApiMessage message) {
         //FROM LOGIN DATA
-        if(message.opcode() == 18 || message.opcode() == 115) {
+        if(message.opcode() == RawApiMessage::OpCode::AUTH || message.opcode() == RawApiMessage::OpCode::REQUIEST_TOKEN) {
             updateSessionData(message.payload());
         }
         //FROM UPDATE ON START DATA
-        if(message.opcode() == 19) {
+        if(message.opcode() == RawApiMessage::OpCode::LOGIN) {
             updateOnStartData(message.payload());
         }
         //FROM START
-        if(message.opcode() == 6) {
+        if(message.opcode() == RawApiMessage::OpCode::SESSION_INIT) {
             coldStart();
         }
     });
@@ -69,7 +69,7 @@ void UserSession::coldStart()
     QJsonObject payload;
     payload["events"] = QJsonArray() << event;
 
-    int seq = m_messQueue->sendMessage(5, payload);
+    int seq = m_messQueue->sendMessage(RawApiMessage::OpCode::LOG, payload);
     connect(m_messQueue, &MessagesQueue::messageReceived, [=](RawApiMessage message) {
         if(seq == message.seq()) {
             qDebug() << "COLD START!";
@@ -107,7 +107,7 @@ void UserSession::goNavigation(int from, int to)
 
     QJsonObject payload;
     payload["events"] = QJsonArray() << event;
-    int seq = m_messQueue->sendMessage(5, payload);
+    int seq = m_messQueue->sendMessage(RawApiMessage::OpCode::LOG, payload);
     connect(m_messQueue, &MessagesQueue::messageReceived, [=](RawApiMessage message) {
         if(seq == message.seq()) {
             qDebug() << "PROFILE READY!";

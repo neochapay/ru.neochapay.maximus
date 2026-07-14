@@ -33,7 +33,7 @@ public:
     ~MessagesQueue();
 
     static MessagesQueue *instance();
-    int sendMessage(int opCode, QJsonObject payload);
+    int sendMessage(RawApiMessage::OpCode opCode, QJsonObject payload);
 
 signals:
     void readyToSend();

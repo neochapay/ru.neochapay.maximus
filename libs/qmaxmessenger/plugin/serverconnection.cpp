@@ -60,7 +60,7 @@ void ServerConnection::init()
     userAgent.insert("timezone", "Europe/Moscow");
     payload.insert("userAgent", userAgent);
 
-    m_messSeq = m_messQueue->sendMessage(6, payload);
+    m_messSeq = m_messQueue->sendMessage(RawApiMessage::OpCode::SESSION_INIT, payload);
     //m_heartBeatTimer->start(30000);
 }
 
@@ -68,23 +68,23 @@ void ServerConnection::sendHeartBeatMessage()
 {
     QJsonObject payload;
     payload["interactive"] = true;
-    m_messQueue->sendMessage(1, payload);
+    m_messQueue->sendMessage(RawApiMessage::OpCode::PING, payload);
 }
 
 void ServerConnection::onMessageReceived(RawApiMessage message)
 {
-    if(message.opcode() == 6) {
+    if(message.opcode() == RawApiMessage::OpCode::SESSION_INIT) {
         //COUNTRY CODES AND OTHER FOR PHONENUMBERS
         emit readyToLogin();
     }
 
-    if(message.opcode() == 17) {
+    if(message.opcode() == RawApiMessage::OpCode::AUTH_REQUEST) {
         if(!message.payload()["token"].toString().isEmpty()) {
             emit tokenReady(message.payload()["token"].toString());
         }
     }
 
-    if(message.opcode() == 18) {
+    if(message.opcode() == RawApiMessage::OpCode::AUTH) {
         QJsonObject payload = message.payload();
         if(payload["passwordChallenge"].isUndefined()) {
             qDebug() << "READY TO LOGIN";
@@ -95,7 +95,7 @@ void ServerConnection::onMessageReceived(RawApiMessage message)
         }
     }
 
-    if(message.opcode() == 115) {
+    if(message.opcode() == RawApiMessage::OpCode::REQUIEST_TOKEN) {
         if(!message.payload()["error"].isUndefined()) {
             qWarning() << message.payload()["localizedMessage"];
             return;
@@ -117,7 +117,7 @@ void ServerConnection::sendPhone(QString phone)
     payload["language"] = "ru";
     payload["phone"] = phone;
 
-    m_messQueue->sendMessage(17, payload);
+    m_messQueue->sendMessage(RawApiMessage::OpCode::AUTH_REQUEST, payload);
 }
 
 void ServerConnection::sendCode(QString code)
@@ -127,7 +127,7 @@ void ServerConnection::sendCode(QString code)
     payload["token"] = m_settings->value(QString("token")).toString();
     payload["verifyCode"] = code;
 
-    m_messQueue->sendMessage(18, payload);
+    m_messQueue->sendMessage(RawApiMessage::OpCode::AUTH, payload);
 }
 
 void ServerConnection::sendPassword(QString password, QString trackId)
@@ -136,7 +136,7 @@ void ServerConnection::sendPassword(QString password, QString trackId)
     payload["password"] = password;
     payload["trackId"] = trackId;
 
-    m_messQueue->sendMessage(115, payload);
+    m_messQueue->sendMessage(RawApiMessage::OpCode::SEND_PASSWORD, payload);
 }
 
 void ServerConnection::requestDataSync()
@@ -149,7 +149,7 @@ void ServerConnection::requestDataSync()
     payload["interactive"] = true;
     payload["presenceSync"] = 0;
     payload["token"] = m_settings->value(QString("authToken")).toString();
-    m_messQueue->sendMessage(19, payload);
+    m_messQueue->sendMessage(RawApiMessage::OpCode::LOGIN, payload);
 }
 
 void ServerConnection::requestContactsByIDs(QList<int> idS)
@@ -160,7 +160,7 @@ void ServerConnection::requestContactsByIDs(QList<int> idS)
         contactIds << id;
     }
     payload["contactIds"] = contactIds;
-    m_messQueue->sendMessage(32, payload);
+    m_messQueue->sendMessage(RawApiMessage::OpCode::CONTACT_INFO, payload);
 }
 
 void ServerConnection::requestChatById(int chatId, int from, int backward, int forward)
@@ -171,13 +171,13 @@ void ServerConnection::requestChatById(int chatId, int from, int backward, int f
     payload["backward"] = backward;
     payload["forward"] = forward;
     payload["getMessages"] = true;
-    m_messQueue->sendMessage(49, payload);
+    m_messQueue->sendMessage(RawApiMessage::OpCode::CHAT_HISTORY, payload);
 }
 
 void ServerConnection::refreshToken()
 {
     QJsonObject payload;
-    int seq = m_messQueue->sendMessage(158, payload);
+    int seq = m_messQueue->sendMessage(RawApiMessage::OpCode::REQUIEST_TOKEN, payload);
     connect(m_messQueue, &MessagesQueue::messageReceived, [=](RawApiMessage message) {
         if(message.seq() == seq) {
             QJsonObject payload = message.payload();
@@ -204,5 +204,5 @@ void ServerConnection::sendMessage(Chat *chat, QString text)
     message["elements"] = QJsonArray();
     payload["message"] = message;
 
-    m_messQueue->sendMessage(64, payload);
+    m_messQueue->sendMessage(RawApiMessage::OpCode::MSG_SEND, payload);
 }

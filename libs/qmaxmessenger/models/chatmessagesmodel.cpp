@@ -53,11 +53,12 @@ ChatMessagesModel::~ChatMessagesModel()
 
 void ChatMessagesModel::messagesHandler(RawApiMessage message)
 {
-    if(message.opcode() == 49) {
+    if(message.opcode() == RawApiMessage::OpCode::CHAT_HISTORY) {
         loadMessagesList(message.payload());
     }
 
-    if(message.opcode() == 128 || message.opcode() == 64) {
+    if(message.opcode() == RawApiMessage::OpCode::NOTIF_MESSAGE
+        || message.opcode() == RawApiMessage::OpCode::MSG_SEND) {
         if(m_chat == nullptr) {
             return;
         }
@@ -163,7 +164,7 @@ void ChatMessagesModel::requsetChat(qint64 lastEventTime)
     payload["chatId"] = m_chat->chatId();
     payload["from"] = lastEventTime;
 
-    m_messQueue->sendMessage(49, payload);
+    m_messQueue->sendMessage(RawApiMessage::OpCode::CHAT_HISTORY, payload);
 }
 
 void ChatMessagesModel::loadMessagesList(QJsonObject payload)

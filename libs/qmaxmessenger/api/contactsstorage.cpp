@@ -28,7 +28,8 @@ ContactsStorage::ContactsStorage(QObject *parent)
     , m_requestTimer(new QTimer(this))
 {
     connect(m_messQueue, &MessagesQueue::messageReceived, [=](RawApiMessage message) {
-        if(message.opcode() == 19 || message.opcode() == 32) {
+        if(message.opcode() == RawApiMessage::OpCode::LOGIN
+            || message.opcode() == RawApiMessage::OpCode::CONTACT_INFO) {
             loadContactsList(message.payload());
         }
     });
@@ -108,6 +109,6 @@ void ContactsStorage::requestContacts()
     QJsonObject payload;
     payload["contactIds"] = contactIds;
 
-    m_messQueue->sendMessage(32, payload);
+    m_messQueue->sendMessage(RawApiMessage::OpCode::CONTACT_INFO, payload);
     m_contactsIdsForRequest.clear();
 }

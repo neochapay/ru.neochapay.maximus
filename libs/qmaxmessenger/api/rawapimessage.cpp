@@ -20,6 +20,7 @@
 #include "rawapimessage.h"
 
 #include <QJsonDocument>
+#include <QMetaEnum>
 
 RawApiMessage::RawApiMessage(QObject *parent)
     : QObject(parent)
@@ -31,7 +32,14 @@ RawApiMessage::RawApiMessage(QString jsonString, QObject *parent)
 {
     QJsonObject mess = QJsonDocument::fromJson(jsonString.toUtf8()).object();
     m_ver = mess.value("ver").toInt();
-    m_opcode = mess.value("opcode").toInt();
+    QMetaEnum opMeta = QMetaEnum::fromType<OpCode>();
+    int opcode = mess.value("opcode").toInt();
+    if (opMeta.valueToKey(opcode) != nullptr) {
+        m_opcode = static_cast<OpCode>(opcode);
+    } else {
+        m_opcode = UNKNOW_OPT_CODE;
+    }
+
     m_seq = mess.value("seq").toInt();
     if(mess.value("cmd").toInt() == 0) {
         m_type = RawApiMessage::Type::out;
@@ -74,12 +82,12 @@ void RawApiMessage::setType(Type newType)
     emit rawMessageChanged();
 }
 
-int RawApiMessage::opcode() const
+RawApiMessage::OpCode RawApiMessage::opcode() const
 {
     return m_opcode;
 }
 
-void RawApiMessage::setOpcode(int newOptcode)
+void RawApiMessage::setOpcode(OpCode newOptcode)
 {
     if (m_opcode == newOptcode)
         return;
