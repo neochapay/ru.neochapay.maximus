@@ -19,8 +19,6 @@
 
 #include "chatslistmodel.h"
 
-#include <QJsonArray>
-
 ChatsListModel::ChatsListModel(QObject *parent)
     : QAbstractListModel{parent}
     , m_messQueue(MessagesQueue::instance())
@@ -121,24 +119,24 @@ Chat *ChatsListModel::get(int index)
     return m_chats.at(index);
 }
 
-void ChatsListModel::loadChatsList(QJsonObject payload)
+void ChatsListModel::loadChatsList(QVariantMap payload)
 {
-    QJsonArray chats = payload["chats"].toArray();
+    QVariantMap chats = payload["chats"].toMap();
     if(chats.count() == 0) {
         qWarning() << Q_FUNC_INFO << "Chats list is empty";
         return;
     }
     beginResetModel();
     m_chats.clear();
-    foreach (QJsonValue cht, chats) {
-        Chat* chat = new Chat(cht.toObject());
+    foreach (QVariant cht, chats) {
+        Chat* chat = new Chat(cht.toMap());
         m_chats.push_back(chat);
     }
 
     endResetModel();
 }
 
-void ChatsListModel::handleNewMessageChanges(QJsonObject payload)
+void ChatsListModel::handleNewMessageChanges(QVariantMap payload)
 {
     qint64 newUnreadCount = payload["unread"].toDouble();
     qint64 chatId = payload["chatId"].toDouble();
@@ -153,11 +151,11 @@ void ChatsListModel::handleNewMessageChanges(QJsonObject payload)
     }
 }
 
-void ChatsListModel::addNewMessageToChat(QJsonObject payload)
+void ChatsListModel::addNewMessageToChat(QVariantMap payload)
 {
     for(int i = 0; i < m_chats.count(); ++i) {
         if(payload["chatId"].toDouble() == m_chats.at(i)->chatId()) {
-            m_chats.at(i)->addMessage(payload["message"].toObject());
+            m_chats.at(i)->addMessage(payload["message"].toMap());
         }
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Chupligin Sergey <neochapay@gmail.com>
+ * Copyright (C) 2025-2026 Chupligin Sergey <neochapay@gmail.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public
@@ -31,7 +31,7 @@ Contact::Contact(QObject *parent)
 {
 }
 
-Contact::Contact(QJsonObject object, QObject *parent)
+Contact::Contact(QVariantMap object, QObject *parent)
     : QObject{parent}
     , m_baseRawUrl("")
     , m_userId(-1)
@@ -43,7 +43,7 @@ Contact::Contact(QJsonObject object, QObject *parent)
     m_baseRawUrl = object["baseRawUrl"].toString();
     m_baseUrl = object["baseUrl"].toString();
 
-    QJsonObject names = object["names"].toArray().first().toObject();
+    QVariantMap names = object["names"].toMap().first().toMap();
     m_name = names["name"].toString();
     m_firstName = names["firstName"].toString();
     m_lastName = names["lastName"].toString();

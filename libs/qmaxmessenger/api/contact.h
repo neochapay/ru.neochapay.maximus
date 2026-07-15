@@ -40,7 +40,7 @@ class Contact : public QObject
 
 public:
     explicit Contact(QObject *parent = nullptr);
-    explicit Contact(QJsonObject object, QObject *parent = nullptr);
+    explicit Contact(QVariantMap object, QObject *parent = nullptr);
     explicit Contact(int userId, QObject *parent = nullptr);
     Contact(const Contact &other, QObject *parent = nullptr);
     Contact& operator=(const Contact&other);

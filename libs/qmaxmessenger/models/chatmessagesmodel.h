@@ -55,8 +55,8 @@ private slots:
     void messagesHandler(RawApiMessage message);
 
 private:
-    void loadMessagesList(QJsonObject payload);
-    void pushNewMessageToList(QJsonObject message);
+    void loadMessagesList(QVariantMap payload);
+    void pushNewMessageToList(QVariantMap message);
 
     MessagesQueue* m_messQueue;
 

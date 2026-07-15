@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Chupligin Sergey <neochapay@gmail.com>
+ * Copyright (C) 2025-2026 Chupligin Sergey <neochapay@gmail.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public
@@ -19,8 +19,6 @@
 #ifndef CHATMESSAGE_H
 #define CHATMESSAGE_H
 
-#include <QJsonObject>
-#include <QJsonArray>
 #include <QObject>
 #include <QDateTime>
 #include <QVariant>
@@ -65,7 +63,7 @@ public:
     Q_ENUMS(MessageType)
 
     explicit ChatMessage(QObject *parent = nullptr);
-    explicit ChatMessage(QJsonObject chatMessageObject, QObject *parent = nullptr);
+    explicit ChatMessage(QVariantMap chatMessageObject, QObject *parent = nullptr);
     ChatMessage(const ChatMessage& other, QObject *parent = nullptr);
     ChatMessage& operator=(const ChatMessage& other);
 

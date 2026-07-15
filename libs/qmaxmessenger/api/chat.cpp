@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Chupligin Sergey <neochapay@gmail.com>
+ * Copyright (C) 2025-2026 Chupligin Sergey <neochapay@gmail.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public
@@ -26,14 +26,14 @@ Chat::Chat(QObject *parent)
 {
 }
 
-Chat::Chat(QJsonObject jsonObject, QObject *parent)
+Chat::Chat(QVariantMap jsonObject, QObject *parent)
     : QObject{parent}
 {
     m_owner = Contact(jsonObject["owner"].toInt());
     m_hasBots = jsonObject["hasBots"].toInt();
     m_joinTime = jsonObject["joinTime"].toDouble();
     m_created = jsonObject["created"].toInt();
-    m_messages.push_back(new ChatMessage(jsonObject["lastMessage"].toObject()));
+    m_messages.push_back(new ChatMessage(jsonObject["lastMessage"].toMap()));
     if(jsonObject["type"].toString() == "DIALOG") {
         m_type = ChatType::DIALOG;
     } else if(jsonObject["type"].toString() == "CHAT") {
@@ -69,7 +69,7 @@ Chat::Chat(QJsonObject jsonObject, QObject *parent)
         m_access = Access::UNKNOWACCESS;
     }
 
-    foreach (QJsonValue participant, jsonObject["participants"].toObject().keys()) {
+    foreach (QJsonValue participant, jsonObject["participants"].toMap().keys()) {
         int contactId = participant.toString().toInt();
         if(contactId != m_owner.userId()) {
             Contact p = Contact(contactId);
@@ -78,7 +78,7 @@ Chat::Chat(QJsonObject jsonObject, QObject *parent)
     }
     m_chatId = jsonObject["id"].toDouble();
     m_chatCid = jsonObject["cid"].toDouble();
-    m_pinnedMessage = new ChatMessage(jsonObject["pinnedMessage"].toObject());
+    m_pinnedMessage = new ChatMessage(jsonObject["pinnedMessage"].toMap());
     m_newMessagesCount = jsonObject["newMessages"].toDouble();
 }
 
@@ -238,7 +238,7 @@ void Chat::setNewMessagesCount(qint64 count)
     m_newMessagesCount = count;
 }
 
-void Chat::addMessage(QJsonObject message)
+void Chat::addMessage(QVariantMap message)
 {
     m_messages.push_back(new ChatMessage(message));
     m_lastEventTime = message["time"].toDouble();

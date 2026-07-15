@@ -18,8 +18,8 @@
  */
 
 #include "rawapimessage.h"
-
-#include <QJsonDocument>
+#include <QDataStream>
+#include <QDebugStateSaver>
 #include <QMetaEnum>
 
 RawApiMessage::RawApiMessage(QObject *parent)
@@ -27,26 +27,42 @@ RawApiMessage::RawApiMessage(QObject *parent)
 {
 }
 
-RawApiMessage::RawApiMessage(QString jsonString, QObject *parent)
+RawApiMessage::RawApiMessage(QByteArray data, QObject *parent)
     : QObject(parent)
 {
-    QJsonObject mess = QJsonDocument::fromJson(jsonString.toUtf8()).object();
-    m_ver = mess.value("ver").toInt();
+    QDataStream in(&data, QIODevice::ReadOnly);
+    in.setByteOrder(QDataStream::BigEndian);
+
+    quint8 ver;
+    quint8 cmd;
+    quint16 seq;
+    quint16 opcode;
+    quint32 payloadLen;
+
+    in >> ver;
+    in >> cmd;
+    in >> seq;
+    in >> opcode;
+    in >> payloadLen;
+
+    m_ver = ver;
+    m_seq = seq;
+
+    QByteArray payload = data.mid(10);
     QMetaEnum opMeta = QMetaEnum::fromType<OpCode>();
-    int opcode = mess.value("opcode").toInt();
+
     if (opMeta.valueToKey(opcode) != nullptr) {
         m_opcode = static_cast<OpCode>(opcode);
     } else {
+        qWarning() << "WRONG OPCODE" << opcode;
         m_opcode = UNKNOW_OPT_CODE;
     }
 
-    m_seq = mess.value("seq").toInt();
-    if(mess.value("cmd").toInt() == 0) {
-        m_type = RawApiMessage::Type::out;
-    } else {
-        m_type = RawApiMessage::Type::in;
-    }
-    m_payload = mess.value("payload").toObject();
+    m_type = (cmd == 0)
+                 ? RawApiMessage::out
+                 : RawApiMessage::in;
+
+    m_payload = MsgPack::unpack(payload).toMap();
 }
 
 RawApiMessage::RawApiMessage(const RawApiMessage &other, QObject *parent)
@@ -67,6 +83,21 @@ RawApiMessage &RawApiMessage::operator=(const RawApiMessage & other)
     m_type = other.m_type;
     m_payload = other.m_payload;
     return *this;
+}
+
+QDebug operator<<(QDebug debug, const RawApiMessage &message)
+{
+    QDebugStateSaver saver(debug);
+
+    debug.nospace()
+        << "RawApiMessage("
+        << "type=" << static_cast<int>(message.type())
+        << ", opcode=" << message.opcode()
+        << ", seq=" << message.seq()
+        << ", payload=" << message.payload()
+        << ")";
+
+    return debug;
 }
 
 RawApiMessage::Type RawApiMessage::type() const
@@ -108,12 +139,12 @@ void RawApiMessage::setSeq(int newSeq)
     emit rawMessageChanged();
 }
 
-const QJsonObject &RawApiMessage::payload() const
+const QVariantMap &RawApiMessage::payload() const
 {
     return m_payload;
 }
 
-void RawApiMessage::setPayload(const QJsonObject &newPayload)
+void RawApiMessage::setPayload(const QVariantMap &newPayload)
 {
     if (m_payload == newPayload)
         return;
@@ -121,9 +152,9 @@ void RawApiMessage::setPayload(const QJsonObject &newPayload)
     emit rawMessageChanged();
 }
 
-QString RawApiMessage::toJsonString()
+QByteArray RawApiMessage::toByteArray()
 {
-    QJsonObject message;
+    QVariantMap message;
     message["ver"] = ver();
     if(m_type == RawApiMessage::Type::out) {
         message["cmd"] = 0;
@@ -134,11 +165,5 @@ QString RawApiMessage::toJsonString()
     message["opcode"] = m_opcode;
     message["payload"] = m_payload;
 
-    QJsonDocument doc(message);
-    return doc.toJson(QJsonDocument::Compact);
-}
-
-void RawApiMessage::formJsonString(QString jsonString)
-{
-    Q_UNUSED(jsonString)
+    return MsgPack::pack(m_payload);
 }

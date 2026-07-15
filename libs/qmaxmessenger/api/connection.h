@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Chupligin Sergey <neochapay@gmail.com>
+ * Copyright (C) 2025-2026 Chupligin Sergey <neochapay@gmail.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public
@@ -42,12 +42,13 @@ signals:
 private slots:
     void onDisconected();
     void onConnected();
-    void onTextMessageReceived(QString messageString);
     void onError(QAbstractSocket::SocketError error);
+    void onReadyRead();
 
 private:
-    QWebSocket m_webSocket;
+    QSslSocket m_socket;
     bool m_connected;
+    QByteArray m_receiveBuffer;
 
     void connectToSocket();
 };

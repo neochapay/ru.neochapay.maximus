@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Chupligin Sergey <neochapay@gmail.com>
+ * Copyright (C) 2025-2026 Chupligin Sergey <neochapay@gmail.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public
@@ -27,7 +27,7 @@ ChatMessage::ChatMessage(QObject *parent)
 {
 }
 
-ChatMessage::ChatMessage(QJsonObject chatMessageObject, QObject *parent)
+ChatMessage::ChatMessage(QVariantMap chatMessageObject, QObject *parent)
     : QObject{parent}
     , m_messageType(UnknowMessageType)
     , m_reactionsCount(0)
@@ -39,14 +39,14 @@ ChatMessage::ChatMessage(QJsonObject chatMessageObject, QObject *parent)
     m_messageTime = QDateTime::fromMSecsSinceEpoch(chatMessageObject["time"].toDouble());
 
     if(chatMessageObject.contains("link")) {
-        QJsonObject chatReply = chatMessageObject["link"].toObject()["message"].toObject();
+        QVariantMap chatReply = chatMessageObject["link"].toMap()["message"].toMap();
         m_messageReply = new ChatMessage(chatReply);
     }
 
 
-    QJsonArray elements = chatMessageObject["elements"].toArray();
-    foreach (QJsonValue element, elements) {
-        QJsonObject e = element.toObject();
+    QVariantMap elements = chatMessageObject["elements"].toMap();
+    foreach (QVariant element, elements) {
+        QVariantMap e = element.toMap();
         ChatMessageElement chatMessageElement;
         chatMessageElement.type = e["type"].toString();
         chatMessageElement.from = e["from"].toInt();
@@ -58,9 +58,9 @@ ChatMessage::ChatMessage(QJsonObject chatMessageObject, QObject *parent)
         m_messageType = TextMessage;
     }
 //Attaches
-    QJsonArray attaches = chatMessageObject["attaches"].toArray();
-    foreach (QJsonValue attach, attaches) {
-        QJsonObject attachObject = attach.toObject();
+    QVariantMap attaches = chatMessageObject["attaches"].toMap();
+    foreach (QVariant attach, attaches) {
+        QVariantMap attachObject = attach.toMap();
         QString type = attachObject["_type"].toString();
         if(type == "CONTROL") {
             m_messageType = ControlMessage;
@@ -72,11 +72,11 @@ ChatMessage::ChatMessage(QJsonObject chatMessageObject, QObject *parent)
 
 //Reactions
     if(chatMessageObject.contains("reactionInfo")) {
-        m_reactionsCount = chatMessageObject["reactionInfo"].toObject()["totalCount"].toInt();
-        QJsonArray reactions = chatMessageObject["reactionInfo"].toObject()["counters"].toArray();
-        foreach(QJsonValue reaction, reactions) {
-            int reactionsCount = reaction.toObject()["count"].toInt();
-            QString reactionsString = reaction.toObject()["reaction"].toString();
+        m_reactionsCount = chatMessageObject["reactionInfo"].toMap()["totalCount"].toInt();
+        QVariantMap reactions = chatMessageObject["reactionInfo"].toMap()["counters"].toMap();
+        foreach(QVariant reaction, reactions) {
+            int reactionsCount = reaction.toMap()["count"].toInt();
+            QString reactionsString = reaction.toMap()["reaction"].toString();
             ChatMessageReactions* r = new ChatMessageReactions(reactionsCount, reactionsString);
             m_reactions.push_back(r);
         }

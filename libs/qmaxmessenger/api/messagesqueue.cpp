@@ -47,7 +47,7 @@ MessagesQueue* MessagesQueue::instance()
     return messagesQueueInstance;
 }
 
-int MessagesQueue::sendMessage(RawApiMessage::OpCode opCode, QJsonObject payload)
+int MessagesQueue::sendMessage(RawApiMessage::OpCode opCode, QVariantMap payload)
 {
     int seq = m_messageId;
     RawApiMessage mess;

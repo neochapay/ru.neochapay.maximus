@@ -40,7 +40,7 @@ signals:
     void contactStorageUpdated(QList<int> updatesIds);
 
 private:
-    void loadContactsList(QJsonObject payload);
+    void loadContactsList(QVariantMap payload);
     void requestContacts();
 
     QList<int> m_contactsIdsForRequest;

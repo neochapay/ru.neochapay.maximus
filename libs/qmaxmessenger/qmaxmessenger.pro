@@ -2,8 +2,8 @@ TEMPLATE = lib
 TARGET = qmaxmessenger
 QT +=  core network
 
-INCLUDEPATH += ../qtwebsockets$$QT_MAJOR_VERSION
-LIBS += -L../qtwebsockets$$QT_MAJOR_VERSION -lqtwebsockets
+INCLUDEPATH += ../qtwebsockets$$QT_MAJOR_VERSION ../qmsgpack
+LIBS += -L../qtwebsockets$$QT_MAJOR_VERSION -lqtwebsockets -L../qmsgpack -lqmsgpack
 
 SOURCES += \
     api/chat.cpp \
