@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Chupligin Sergey <neochapay@gmail.com>
+ * Copyright (C) 2025-2026 Chupligin Sergey <neochapay@gmail.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public
@@ -18,24 +18,43 @@
  */
 
 #include "connection.h"
+#include "qsslcipher.h"
+
+#include <QDataStream>
 
 Connection::Connection(QObject *parent)
     : QObject(parent)
     , m_connected(false)
 {
-    connect(&m_webSocket, &QWebSocket::connected, this, &Connection::onConnected);
-    connect(&m_webSocket, &QWebSocket::errorOccurred, this, &Connection::onError);
-    connect(&m_webSocket, &QWebSocket::disconnected, this, &Connection::onDisconected);
-    connect(&m_webSocket, &QWebSocket::textMessageReceived, this, &Connection::onTextMessageReceived);
+    connect(&m_socket, &QSslSocket::connected, this, &Connection::onConnected);
+    connect(&m_socket,
+            SIGNAL(error(QAbstractSocket::SocketError)),
+            this,
+            SLOT(onError(QAbstractSocket::SocketError)));
+    connect(&m_socket, &QSslSocket::disconnected, this, &Connection::onDisconected);
+    connect(&m_socket, &QSslSocket::readyRead, this, &Connection::onReadyRead);
 
     connectToSocket();
 }
 
 int Connection::sendMessage(RawApiMessage message)
 {
-    QString jsonString = message.toJsonString();
-    int seq = m_webSocket.sendTextMessage(jsonString);
-    qDebug().noquote() << ">>>>>>>" << jsonString;
+    qDebug() << Q_FUNC_INFO << message;
+
+    QByteArray payload = message.toByteArray();
+    QByteArray packet;
+    QDataStream out(&packet, QIODevice::WriteOnly);
+
+    out << (quint8)message.ver();
+    out << static_cast<quint8>(message.type());
+    out << (quint16)message.seq();
+    out << static_cast<quint16>(message.opcode());
+    out << static_cast<quint32>(payload.size());
+
+    packet.append(payload);
+
+    int seq = m_socket.write(packet);
+    m_socket.flush();
     return seq;
 }
 
@@ -57,29 +76,70 @@ void Connection::onDisconected()
     connectToSocket();
 }
 
-void Connection::onTextMessageReceived(QString messageString)
-{
-    RawApiMessage message(messageString);
-    qDebug().noquote() << "<<<<<<<" << messageString;
-    emit messageReceived(message);
-}
 
 void Connection::onError(QAbstractSocket::SocketError error)
 {
     Q_UNUSED(error);
 
-    qDebug() << Q_FUNC_INFO << m_webSocket.errorString();
-    emit errorReceived(m_webSocket.errorString());
+    qDebug() << Q_FUNC_INFO << m_socket.errorString();
+    emit errorReceived(m_socket.errorString());
+
+    if(m_connected) {
+        m_connected = false;
+        emit connectedChanged();
+    }
+}
+
+void Connection::onReadyRead()
+{
+    QByteArray data = m_socket.readAll();
+    m_receiveBuffer.append(data);
+
+    while (m_receiveBuffer.size() >= 10)
+    {
+        QDataStream in(&m_receiveBuffer, QIODevice::ReadOnly);
+        in.setByteOrder(QDataStream::BigEndian);
+
+        quint8 ver;
+        quint8 cmd;
+        quint16 seq;
+        quint16 opcode;
+        quint32 packedLen;
+
+        in >> ver;
+        in >> cmd;
+        in >> seq;
+        in >> opcode;
+        in >> packedLen;
+
+        quint8 flags = (packedLen >> 24) & 0xFF;
+        quint32 payloadLen = packedLen & 0x00FFFFFF;
+
+        const int headerSize = 10;
+        const int frameSize = headerSize + payloadLen;
+
+        if (m_receiveBuffer.size() < frameSize)
+        {
+            qDebug() << "WAIT:" << m_receiveBuffer.size() << "/" << frameSize;
+            return;
+        }
+
+        QByteArray frame =  m_receiveBuffer.left(frameSize);
+        m_receiveBuffer.remove(0, frameSize);
+
+        RawApiMessage message(frame);
+
+        qDebug() << Q_FUNC_INFO << message;
+        emit messageReceived(message);
+    }
 }
 
 void Connection::connectToSocket()
 {
-    QNetworkRequest request;
-    request.setUrl(QUrl("wss://ws-api.oneme.ru/websocket"));
-    request.setRawHeader("Origin", "https://web.max.ru");
-
-    m_webSocket.ignoreSslErrors();
-    m_webSocket.open(request);
+    m_socket.connectToHostEncrypted(
+        "api.oneme.ru",
+        443
+    );
 }
 
 bool Connection::connected() const

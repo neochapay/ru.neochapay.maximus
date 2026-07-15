@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Chupligin Sergey <neochapay@gmail.com>
+ * Copyright (C) 2025-2026 Chupligin Sergey <neochapay@gmail.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public
@@ -78,7 +78,7 @@ public:
     };
 
     explicit Chat(QObject *parent = nullptr);
-    explicit Chat(QJsonObject jsonObject, QObject *parent = nullptr);
+    explicit Chat(QVariantMap jsonObject, QObject *parent = nullptr);
     Chat(const Chat& other, QObject *parent = nullptr);
     Chat& operator=(const Chat& other);
 
@@ -105,7 +105,7 @@ public:
     int participantsCount() const;
     qint64 newMessagesCount() const;
     void setNewMessagesCount(qint64 count);
-    void addMessage(QJsonObject message);
+    void addMessage(QVariantMap message);
 
 signals:
     void chatChanged();

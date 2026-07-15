@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Chupligin Sergey <neochapay@gmail.com>
+ * Copyright (C) 2025-2026 Chupligin Sergey <neochapay@gmail.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public
@@ -18,7 +18,6 @@
  */
 
 #include "contactsstorage.h"
-#include <QJsonArray>
 
 static ContactsStorage* contactsStorageInstance = 0;
 
@@ -67,17 +66,17 @@ void ContactsStorage::requestContact(int userId)
     }
 }
 
-void ContactsStorage::loadContactsList(QJsonObject payload)
+void ContactsStorage::loadContactsList(QVariantMap payload)
 {
-    QJsonArray contacts = payload["contacts"].toArray();
+    QVariantMap contacts = payload["contacts"].toMap();
     if(contacts.isEmpty()) {
         qWarning() << Q_FUNC_INFO << "Contacts list is empty";
         return;
     }
 
     QList<int> updatesIds;
-    foreach (QJsonValue cont, contacts) {
-        Contact* contact = new Contact(cont.toObject());
+    foreach (QVariant cont, contacts) {
+        Contact* contact = new Contact(cont.toMap());
         if(contact == nullptr) {
             continue;
         }
@@ -102,11 +101,11 @@ void ContactsStorage::requestContacts()
         return;
     }
 
-    QJsonArray contactIds;
+    QVariantMap contactIds;
     foreach (int contactId, m_contactsIdsForRequest) {
-        contactIds << contactId;
+        contactIds.insert(QString::number(contactId), contactId);
     }
-    QJsonObject payload;
+    QVariantMap payload;
     payload["contactIds"] = contactIds;
 
     m_messQueue->sendMessage(RawApiMessage::OpCode::CONTACT_INFO, payload);

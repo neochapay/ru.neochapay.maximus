@@ -20,7 +20,6 @@
 #include "serverconnection.h"
 #include <QVariant>
 #include <QUuid>
-#include <QJsonArray>
 
 ServerConnection::ServerConnection(QObject *parent)
     : QObject(parent)
@@ -45,20 +44,24 @@ ServerConnection::ServerConnection(QObject *parent)
 
 void ServerConnection::init()
 {
-    QJsonObject payload;
-    payload["deviceId"] = m_settings->value(QString("deviceId")).toString();
+    QVariantMap userAgent;
+    userAgent["deviceType"] = "ANDROID";
+    userAgent["appVersion"] = "26.14.1";
+    userAgent["osVersion"] = "Android 14";
+    userAgent["timezone"] = "Europe/Moscow";
+    userAgent["screen"] = "428dpi 428dpi 1080x2400";
+    userAgent["pushDeviceType"] = "GCM";
+    userAgent["arch"] = "arm64-v8a";
+    userAgent["locale"] = "ru";
+    userAgent["buildNumber"] = 6686;
+    userAgent["deviceName"] = "Pixel 8";
+    userAgent["deviceLocale"] = "ru";
 
-    QJsonObject userAgent;
-    userAgent.insert("appVersion", "25.11.1");
-    userAgent.insert("deviceLocale", "ru");
-    userAgent.insert("deviceName", "Chrome");
-    userAgent.insert("deviceType", "WEB");
-    userAgent.insert("headerUserAgent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36");
-    userAgent.insert("locale", "ru");
-    userAgent.insert("osVersion", "Linux");
-    userAgent.insert("screen", "1080x1920 1.0x");
-    userAgent.insert("timezone", "Europe/Moscow");
-    payload.insert("userAgent", userAgent);
+    QVariantMap payload;
+    payload["mt_instanceid"] = "13584293248712345678";
+    payload["userAgent"] = userAgent;
+    payload["clientSessionId"] = 42;
+    payload["deviceId"] = m_settings->value(QString("deviceId")).toString().remove('{').remove('}');
 
     m_messSeq = m_messQueue->sendMessage(RawApiMessage::OpCode::SESSION_INIT, payload);
     //m_heartBeatTimer->start(30000);
@@ -66,7 +69,7 @@ void ServerConnection::init()
 
 void ServerConnection::sendHeartBeatMessage()
 {
-    QJsonObject payload;
+    QVariantMap payload;
     payload["interactive"] = true;
     m_messQueue->sendMessage(RawApiMessage::OpCode::PING, payload);
 }
@@ -85,22 +88,22 @@ void ServerConnection::onMessageReceived(RawApiMessage message)
     }
 
     if(message.opcode() == RawApiMessage::OpCode::AUTH) {
-        QJsonObject payload = message.payload();
-        if(payload["passwordChallenge"].isUndefined()) {
+        QVariantMap payload = message.payload();
+        if(!payload["passwordChallenge"].isNull()) {
             qDebug() << "READY TO LOGIN";
             emit readyToLogin();
         } else {
-            QString trackId = payload["passwordChallenge"].toObject()["trackId"].toString();
+            QString trackId = payload["passwordChallenge"].toMap()["trackId"].toString();
             emit requestPassword(trackId);
         }
     }
 
     if(message.opcode() == RawApiMessage::OpCode::REQUIEST_TOKEN) {
-        if(!message.payload()["error"].isUndefined()) {
+        if(!message.payload()["error"].isNull()) {
             qWarning() << message.payload()["localizedMessage"];
             return;
         }
-        QString token = message.payload()["tokenAttrs"].toObject()["LOGIN"].toObject()["token"].toString();
+        QString token = message.payload()["tokenAttrs"].toMap()["LOGIN"].toMap()["token"].toString();
         if(!token.isEmpty()) {
             emit tokenReady(token);
         } else {
@@ -112,7 +115,7 @@ void ServerConnection::onMessageReceived(RawApiMessage message)
 
 void ServerConnection::sendPhone(QString phone)
 {
-    QJsonObject payload;
+    QVariantMap payload;
     payload["type"] = "START_AUTH";
     payload["language"] = "ru";
     payload["phone"] = phone;
@@ -122,7 +125,7 @@ void ServerConnection::sendPhone(QString phone)
 
 void ServerConnection::sendCode(QString code)
 {
-    QJsonObject payload;
+    QVariantMap payload;
     payload["authTokenType"] = "CHECK_CODE";
     payload["token"] = m_settings->value(QString("token")).toString();
     payload["verifyCode"] = code;
@@ -132,7 +135,7 @@ void ServerConnection::sendCode(QString code)
 
 void ServerConnection::sendPassword(QString password, QString trackId)
 {
-    QJsonObject payload;
+    QVariantMap payload;
     payload["password"] = password;
     payload["trackId"] = trackId;
 
@@ -141,7 +144,7 @@ void ServerConnection::sendPassword(QString password, QString trackId)
 
 void ServerConnection::requestDataSync()
 {
-    QJsonObject payload;
+    QVariantMap payload;
     payload["chatsCount"] = 40;
     payload["chatsSync"] = 0;
     payload["contactsSync"] = 0;
@@ -154,10 +157,10 @@ void ServerConnection::requestDataSync()
 
 void ServerConnection::requestContactsByIDs(QList<int> idS)
 {
-    QJsonObject payload;
-    QJsonArray contactIds;
+    QVariantMap payload;
+    QVariantMap contactIds;
     foreach (int id, idS) {
-        contactIds << id;
+        contactIds.insert(QString::number(id), id);
     }
     payload["contactIds"] = contactIds;
     m_messQueue->sendMessage(RawApiMessage::OpCode::CONTACT_INFO, payload);
@@ -165,7 +168,7 @@ void ServerConnection::requestContactsByIDs(QList<int> idS)
 
 void ServerConnection::requestChatById(int chatId, int from, int backward, int forward)
 {
-    QJsonObject payload;
+    QVariantMap payload;
     payload["chatId"] = chatId;
     payload["from"] = from;
     payload["backward"] = backward;
@@ -176,11 +179,11 @@ void ServerConnection::requestChatById(int chatId, int from, int backward, int f
 
 void ServerConnection::refreshToken()
 {
-    QJsonObject payload;
+    QVariantMap payload;
     int seq = m_messQueue->sendMessage(RawApiMessage::OpCode::REQUIEST_TOKEN, payload);
     connect(m_messQueue, &MessagesQueue::messageReceived, [=](RawApiMessage message) {
         if(message.seq() == seq) {
-            QJsonObject payload = message.payload();
+            QVariantMap payload = message.payload();
             QString lifetimeToken = payload["token"].toString();
             int tokenLifeTime = payload["token_lifetime_ts"].toInt();
             int tokenRefresh = payload["token_refresh_ts"].toInt();
@@ -194,14 +197,14 @@ void ServerConnection::refreshToken()
 
 void ServerConnection::sendMessage(Chat *chat, QString text)
 {
-    QJsonObject payload;
+    QVariantMap payload;
     payload["chatId"] = chat->chatId();
     payload["notify"] = true;
-    QJsonObject message;
+    QVariantMap message;
     message["text"] = text;
     message["cid"] = QDateTime::currentDateTime().toMSecsSinceEpoch();
-    message["attaches"] = QJsonArray();
-    message["elements"] = QJsonArray();
+    message["attaches"] = QVariantMap();
+    message["elements"] = QVariantMap();
     payload["message"] = message;
 
     m_messQueue->sendMessage(RawApiMessage::OpCode::MSG_SEND, payload);

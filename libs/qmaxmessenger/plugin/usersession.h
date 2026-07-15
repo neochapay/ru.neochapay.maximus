@@ -49,9 +49,9 @@ signals:
 private:
     void goNavigation(int from, int to);
 
-    void updateSessionData(QJsonObject payload);
-    void updateOnStartData(QJsonObject payload);
-    void updateProfile(QJsonObject profile);
+    void updateSessionData(QVariantMap payload);
+    void updateOnStartData(QVariantMap payload);
+    void updateProfile(QVariantMap profile);
 
     MessagesQueue* m_messQueue;
     Settings* m_settings;

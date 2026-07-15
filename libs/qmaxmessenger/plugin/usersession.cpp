@@ -20,7 +20,6 @@
 #include "usersession.h"
 
 #include <QCoreApplication>
-#include <QJsonArray>
 
 UserSession::UserSession(QObject *parent)
     : QObject{parent}
@@ -55,19 +54,19 @@ void UserSession::coldStart()
 {
     m_actionId++;
     m_eventPrevTime = QDateTime::currentMSecsSinceEpoch()/1000;
-    QJsonObject params;
+    QVariantMap params;
     params["session_id"] = m_sessionId;
     params["action_id"] = m_actionId;
     params["screen_to"] = 51;
 
-    QJsonObject event;
+    QVariantMap event;
     event["event"] = "COLD_START";
     event["type"] = "NAV";
     event["time"] = m_eventPrevTime;
     event["params"] = params;
 
-    QJsonObject payload;
-    payload["events"] = QJsonArray() << event;
+    QVariantMap payload;
+    payload["events"] = event;
 
     int seq = m_messQueue->sendMessage(RawApiMessage::OpCode::LOG, payload);
     connect(m_messQueue, &MessagesQueue::messageReceived, [=](RawApiMessage message) {
@@ -90,7 +89,7 @@ void UserSession::logout()
 void UserSession::goNavigation(int from, int to)
 {
     m_actionId++;
-    QJsonObject params;
+    QVariantMap params;
     params["action_id"] = m_actionId;
     params["prev_time"] = m_eventPrevTime;
     params["screen_from"] = from;
@@ -98,15 +97,15 @@ void UserSession::goNavigation(int from, int to)
     params["session_id"] = m_sessionId;
 
     m_eventPrevTime = QDateTime::currentMSecsSinceEpoch()/1000;
-    QJsonObject event;
+    QVariantMap event;
     event["event"] = "GO";
     event["type"] = "NAV";
     event["time"] = m_eventPrevTime;
     event["params"] = params;
     event["userId"] = m_userProfile->userId();
 
-    QJsonObject payload;
-    payload["events"] = QJsonArray() << event;
+    QVariantMap payload;
+    payload["events"] = event;
     int seq = m_messQueue->sendMessage(RawApiMessage::OpCode::LOG, payload);
     connect(m_messQueue, &MessagesQueue::messageReceived, [=](RawApiMessage message) {
         if(seq == message.seq()) {
@@ -115,27 +114,27 @@ void UserSession::goNavigation(int from, int to)
     });
 }
 
-void UserSession::updateSessionData(QJsonObject payload)
+void UserSession::updateSessionData(QVariantMap payload)
 {
-    QString authToken = payload["tokenAttrs"].toObject()["LOGIN"].toObject()["token"].toString();
+    QString authToken = payload["tokenAttrs"].toMap()["LOGIN"].toMap()["token"].toString();
     if(authToken.isEmpty()) {
         qWarning() << "Auth token is empty!";
         return;
     }
     m_settings->setValue("authToken", authToken);
-    QJsonObject profile = payload["profile"].toObject();
+    QVariantMap profile = payload["profile"].toMap();
 
     updateProfile(profile);
     emit userLogin();
 }
 
-void UserSession::updateOnStartData(QJsonObject payload)
+void UserSession::updateOnStartData(QVariantMap payload)
 {
-    QJsonObject profile = payload["profile"].toObject()["contact"].toObject();
+    QVariantMap profile = payload["profile"].toMap();
     updateProfile(profile);
 }
 
-void UserSession::updateProfile(QJsonObject profile)
+void UserSession::updateProfile(QVariantMap profile)
 {
     Contact* userProfile = new Contact(profile);
     if(userProfile->userId() == 0) {

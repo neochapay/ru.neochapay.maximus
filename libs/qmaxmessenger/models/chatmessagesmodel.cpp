@@ -18,6 +18,7 @@
  */
 
 #include "chatmessagesmodel.h"
+#include "qjsonobject.h"
 
 #include <QJsonArray>
 
@@ -64,7 +65,7 @@ void ChatMessagesModel::messagesHandler(RawApiMessage message)
         }
 
         if(message.payload()["chatId"].toDouble() == m_chat->chatId()) {
-            pushNewMessageToList(message.payload()["message"].toObject());
+            pushNewMessageToList(message.payload()["message"].toMap());
         }
     }
 }
@@ -157,7 +158,7 @@ void ChatMessagesModel::requsetChat(qint64 lastEventTime)
         return;
     }
 
-    QJsonObject payload;
+    QVariantMap payload;
     payload["backward"] = 30;
     payload["forward"] = 0;
     payload["getMessages"] = true;
@@ -167,9 +168,9 @@ void ChatMessagesModel::requsetChat(qint64 lastEventTime)
     m_messQueue->sendMessage(RawApiMessage::OpCode::CHAT_HISTORY, payload);
 }
 
-void ChatMessagesModel::loadMessagesList(QJsonObject payload)
+void ChatMessagesModel::loadMessagesList(QVariantMap payload)
 {
-    QJsonArray messages = payload["messages"].toArray();
+    QVariantMap messages = payload["messages"].toMap();
     if(messages.empty()) {
         return;
     }
@@ -181,8 +182,8 @@ void ChatMessagesModel::loadMessagesList(QJsonObject payload)
     beginInsertRows(QModelIndex(), 0, messages.count() - 1);
     QList<ChatMessage*> newMessages;
 
-    foreach(QJsonValue mess, messages) {
-        ChatMessage* m = new ChatMessage(mess.toObject());
+    foreach(QVariant mess, messages) {
+        ChatMessage* m = new ChatMessage(mess.toMap());
         if(m == nullptr) {
             continue;
         }
@@ -201,7 +202,7 @@ void ChatMessagesModel::loadMessagesList(QJsonObject payload)
     emit chatLoaded();
 }
 
-void ChatMessagesModel::pushNewMessageToList(QJsonObject message)
+void ChatMessagesModel::pushNewMessageToList(QVariantMap message)
 {
     ChatMessage* m = new ChatMessage(message);
     if(m == nullptr || m->messageID() < 1) {

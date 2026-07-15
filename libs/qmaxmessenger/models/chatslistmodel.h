@@ -36,9 +36,9 @@ public:
     Q_INVOKABLE Chat* get(int index);
 
 private:
-    void loadChatsList(QJsonObject payload);
-    void handleNewMessageChanges(QJsonObject payload);
-    void addNewMessageToChat(QJsonObject payload);
+    void loadChatsList(QVariantMap payload);
+    void handleNewMessageChanges(QVariantMap payload);
+    void addNewMessageToChat(QVariantMap payload);
     void sortChats();
     MessagesQueue* m_messQueue;
 

@@ -20,8 +20,8 @@
 #ifndef RAWAPIMESSAGE_H
 #define RAWAPIMESSAGE_H
 
-#include <QJsonObject>
 #include <QObject>
+#include <msgpack.h>
 
 class RawApiMessage : public QObject
 {
@@ -30,7 +30,7 @@ class RawApiMessage : public QObject
     Q_PROPERTY(OpCode opcode READ opcode WRITE setOpcode NOTIFY rawMessageChanged)
     Q_PROPERTY(int seq READ seq WRITE setSeq NOTIFY rawMessageChanged)
     Q_PROPERTY(int ver READ ver)
-    Q_PROPERTY(QJsonObject payload READ payload WRITE setPayload NOTIFY rawMessageChanged)
+    Q_PROPERTY(QVariantMap payload READ payload WRITE setPayload NOTIFY rawMessageChanged)
 
 public:
     enum Type{
@@ -161,7 +161,7 @@ public:
     Q_ENUM(OpCode)
 
     explicit RawApiMessage(QObject *parent = nullptr);
-    RawApiMessage(QString jsonString, QObject *parent = nullptr);
+    RawApiMessage(QByteArray data, QObject *parent = nullptr);
     RawApiMessage(const RawApiMessage& other, QObject *parent = nullptr);
     RawApiMessage& operator=(const RawApiMessage&other);
 
@@ -174,13 +174,12 @@ public:
     int seq() const;
     void setSeq(int newSeq);
 
-    int ver() { return 11;}
+    int ver() { return 10;}
 
-    const QJsonObject &payload() const;
-    void setPayload(const QJsonObject &newPayload);
+    const QVariantMap &payload() const;
+    void setPayload(const QVariantMap &newPayload);
 
-    QString toJsonString();
-    void formJsonString(QString jsonString);
+    QByteArray toByteArray();
 
 signals:
     void rawMessageChanged();
@@ -190,7 +189,7 @@ private:
     OpCode m_opcode;
     int m_seq;
     int m_ver;
-    QJsonObject m_payload;
+    QVariantMap m_payload;
 };
-
+QDebug operator<<(QDebug debug, const RawApiMessage &message);
 #endif // RAWAPIMESSAGE_H
