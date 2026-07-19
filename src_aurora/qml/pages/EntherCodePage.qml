@@ -1,3 +1,5 @@
+
+
 /*
  * Copyright (C) 2025 Chupligin Sergey <neochapay@gmail.com>
  *
@@ -16,7 +18,6 @@
  * the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
  * Boston, MA 02110-1301, USA.
  */
-
 import QtQuick 2.0
 import Sailfish.Silica 1.0
 
@@ -40,7 +41,7 @@ Page {
             anchors.centerIn: parent
         }
 
-        Button{
+        Button {
             id: sendCodeButton
             text: qsTr("Send")
             width: codeNumberField.width
@@ -54,4 +55,3 @@ Page {
         }
     }
 }
-
